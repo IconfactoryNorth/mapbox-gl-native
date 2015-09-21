@@ -1,5 +1,7 @@
 package com.mapbox.mapboxgl.http;
 
+import android.util.Log;
+
 import com.mapbox.mapboxgl.constants.MapboxConstants;
 import com.squareup.okhttp.Call;
 import com.squareup.okhttp.Callback;
@@ -17,9 +19,12 @@ import javax.net.ssl.SSLException;
 
 class HTTPContext {
 
+    private static final String TAG = "MapView";
+
     private static final int CONNECTION_ERROR = 0;
     private static final int TEMPORARY_ERROR = 1;
     private static final int PERMANENT_ERROR = 2;
+    private static final int CANCELED_ERROR = 3;
 
     private static HTTPContext mInstance = null;
 
@@ -78,7 +83,10 @@ class HTTPContext {
                 type = CONNECTION_ERROR;
             } else if ((e instanceof InterruptedIOException)) {
                 type = TEMPORARY_ERROR;
+            } else if (mCall.isCanceled()) {
+                type = CANCELED_ERROR;
             }
+            Log.e(TAG, "onFailure: ", e);
             nativeOnFailure(mNativePtr, type, e.getMessage());
         }
 
@@ -93,7 +101,7 @@ class HTTPContext {
             } finally {
                 response.body().close();
             }
-
+            Log.v(TAG, "onResponse: " + response.toString());
             nativeOnResponse(mNativePtr, response.code(), response.message(), response.header("ETag"), response.header("Last-Modified"), response.header("Cache-Control"), response.header("Expires"), body);
         }
     }

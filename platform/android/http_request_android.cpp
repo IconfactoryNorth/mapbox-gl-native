@@ -76,6 +76,7 @@ private:
     static const int connectionError = 0;
     static const int temporaryError = 1;
     static const int permanentError = 2;
+    static const int canceledError = 3;
 };
 
 // -------------------------------------------------------------------------------------------------
@@ -305,7 +306,7 @@ void HTTPAndroidRequest::onResponse(int code, std::string message, std::string e
 }
 
 void HTTPAndroidRequest::onFailure(int type, std::string message) {
-    if (message != "Canceled") {
+    if (type != canceledError) {
         if (!response) {
             response = std::make_unique<Response>();
         }
