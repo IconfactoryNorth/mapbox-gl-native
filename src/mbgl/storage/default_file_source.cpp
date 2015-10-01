@@ -22,6 +22,8 @@
 #include <algorithm>
 #include <cassert>
 
+#define DISABLE_CACHE_EXPIRATION 1
+
 
 namespace algo = boost::algorithm;
 
@@ -116,10 +118,14 @@ void DefaultFileSource::Impl::startCacheRequest(DefaultFileRequest* request) {
     // revalidate the information without having to redownload everything.
     request->cacheRequest = cache->get(request->resource, [this, request](std::unique_ptr<Response> response) {
         auto expired = [&response] {
+#if DISABLE_CACHE_EXPIRATION
+			return false;
+#else
             const int64_t now = std::chrono::duration_cast<std::chrono::seconds>(
                                     SystemClock::now().time_since_epoch()).count();
             return response->expires <= now;
-        };
+#endif
+		};
 
         if (!response || expired()) {
             // No response or stale cache. Run the real request.
